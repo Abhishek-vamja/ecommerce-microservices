@@ -45,3 +45,5 @@ Thumbs.db
 *.log
 logs/
 */logs/
+
+Ecommerce Microservice.code-workspace
