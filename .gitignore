@@ -46,4 +46,8 @@ Thumbs.db
 logs/
 */logs/
 
-Ecommerce Microservice.code-workspace
+# Workspace & Local Sync Scripts
+*.code-workspace
+"Ecommerce Microservice.code-workspace"
+sync_sellers_and_products.py
+sync_*.py
