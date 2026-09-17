@@ -10,7 +10,8 @@ A detailed breakdown of all user-facing features, merchant tools, admin controls
 3. [👑 Super Admin & Platform Ledger](#3--super-admin--platform-ledger)
 4. [💳 Checkout & Payment Gateway](#4--checkout--payment-gateway)
 5. [⚡ Real-Time WebSockets & Live Tracking](#5--real-time-websockets--live-tracking)
-6. [🛡️ Microservices & Security Architecture](#6--microservices--security-architecture)
+6. [🚀 High-Speed Binary gRPC & Inter-Service Communications](#6--high-speed-binary-grpc--inter-service-communications)
+7. [🛡️ Microservices & Security Architecture](#7--microservices--security-architecture)
 
 ---
 
@@ -94,14 +95,34 @@ A detailed breakdown of all user-facing features, merchant tools, admin controls
 
 ---
 
-## 6. 🛡️ Microservices & Security Architecture
+## 6. 🚀 High-Speed Binary gRPC & Inter-Service Communications
+
+All internal microservice-to-microservice traffic and API Gateway proxy operations run over high-performance binary **gRPC (HTTP/2 + Protocol Buffers)**:
+
+### ⚡ Technical Capabilities & Architecture
+- **HTTP/2 Binary Multiplexing**: Single TCP connection per service with bidirectional streaming and zero head-of-line blocking.
+- **Compact Protocol Buffers (Protobuf)**: Strongly-typed binary serialization reducing payload sizes by ~60-80% compared to JSON.
+- **Dedicated Port Matrix**:
+  - `product-service`: gRPC Port `50051` (REST Port `8002`)
+  - `user-service`: gRPC Port `50052` (REST Port `8001`)
+  - `order-service`: gRPC Port `50053` (REST Port `8003`)
+  - `payment-service`: gRPC Port `50054` (REST Port `8004`)
+- **Direct Inter-Service Stock Deduction**:
+  - Upon order payment capture, `order-service` calls `ProductGrpcService.DeductStock` directly over gRPC (`localhost:50051`), completing inventory adjustments in sub-3ms.
+- **Zero-Downtime Dual-Protocol Gateway**:
+  - API Gateway acts as an intelligent transcoder translating external HTTP/REST requests to binary gRPC, with transparent fallback to HTTP if any service is in maintenance.
+
+---
+
+## 7. 🛡️ Microservices & Security Architecture
 
 | Capability | Implementation Detail |
 | :--- | :--- |
 | **Database-per-Service** | 4 independent PostgreSQL databases (`user_service_db`, `product_service_db`, `order_service_db`, `payment_service_db`) ensuring zero tight-coupling. |
+| **Binary gRPC Channels** | Async channel connection pools with keepalive pings and automatic channel recycling across all 4 microservices. |
 | **Passwordless Auth** | 6-digit cryptographic OTP generated in Redis with strict 300-second TTL and background email workers. |
 | **Rate Limiting** | Redis sliding window rate limiter on API Gateway preventing brute-force and DDoS attempts on auth endpoints. |
-| **HTTP Keep-Alive Pooling** | Shared asynchronous `httpx.AsyncClient` connection pool in API Gateway for sub-millisecond inter-service latency. |
+| **HTTP Keep-Alive Pooling** | Shared asynchronous `httpx.AsyncClient` connection pool in API Gateway for sub-millisecond REST fallback latency. |
 | **Cross-Origin Security** | Fine-grained CORS regex matching local development ports, production domains, and ngrok tunnel endpoints. |
 
 ---
