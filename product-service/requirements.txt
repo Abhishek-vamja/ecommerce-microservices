@@ -10,3 +10,5 @@ redis
 pyjwt
 python-multipart
 python-jose[cryptography]
+grpcio
+protobuf

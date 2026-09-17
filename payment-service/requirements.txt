@@ -8,3 +8,5 @@ python-dotenv
 redis
 pyjwt
 httpx
+grpcio
+protobuf

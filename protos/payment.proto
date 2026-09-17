@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package payment;
+
+// ==========================================
+// Payment gRPC Service Definition
+// ==========================================
+service PaymentGrpcService {
+  rpc CreatePaymentOrder (CreatePaymentOrderGrpcRequest) returns (CreatePaymentOrderGrpcResponse);
+  rpc VerifyPayment (VerifyPaymentGrpcRequest) returns (VerifyPaymentGrpcResponse);
+  rpc HandleWebhook (HandleWebhookGrpcRequest) returns (HandleWebhookGrpcResponse);
+}
+
+// ==========================================
+// Data Structures & Messages
+// ==========================================
+
+message CreatePaymentOrderGrpcRequest {
+  string user_id = 1;
+  string order_id = 2;
+  double amount = 3;
+  string currency = 4;
+}
+
+message CreatePaymentOrderGrpcResponse {
+  bool success = 1;
+  string order_id = 2;
+  string razorpay_order_id = 3;
+  double amount = 4;
+  string currency = 5;
+  string key_id = 6;
+  string error_message = 7;
+}
+
+message VerifyPaymentGrpcRequest {
+  string razorpay_order_id = 1;
+  string razorpay_payment_id = 2;
+  string razorpay_signature = 3;
+}
+
+message VerifyPaymentGrpcResponse {
+  bool success = 1;
+  string message = 2;
+  string status = 3;
+  string order_id = 4;
+  string payment_id = 5;
+  string error_message = 6;
+}
+
+message HandleWebhookGrpcRequest {
+  string payload_json = 1;
+  string signature = 2;
+}
+
+message HandleWebhookGrpcResponse {
+  bool success = 1;
+  string status = 2;
+  string result = 3;
+  string error_message = 4;
+}

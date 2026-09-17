@@ -6,3 +6,5 @@ pydantic-settings
 redis
 winloop
 httptools
+grpcio
+protobuf

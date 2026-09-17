@@ -10,4 +10,7 @@ class Settings(BaseSettings):
     ORDER_SERVICE_URL: str = os.getenv("ORDER_SERVICE_URL", "http://localhost:8003")
     PAYMENT_SERVICE_URL: str = os.getenv("PAYMENT_SERVICE_URL", "http://localhost:8004")
 
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your_secret_key")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+
 settings = Settings()

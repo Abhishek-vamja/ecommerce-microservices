@@ -272,16 +272,20 @@ async def finalize_order_payment(db: Session, order_id: str, payment_id: str) ->
     # Empty active cart for user
     clear_user_cart(db, order.user_id)
 
-    # Trigger stock reduction in product-service
-    items_to_deduct = [{"product_id": item.product_id, "quantity": item.quantity} for item in order.items]
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            await client.post(
-                f"{settings.PRODUCT_SERVICE_URL}/product/deduct-stock",
-                json={"items": items_to_deduct},
-            )
-    except Exception as e:
-        print(f"[Product Stock Deduction Warning]: {e}")
+    # Trigger stock reduction in product-service via High-Speed gRPC (with HTTP fallback)
+    for item in order.items:
+        try:
+            from app.grpc_service.product_client import deduct_stock_grpc
+            grpc_success = await deduct_stock_grpc(item.product_id, item.quantity)
+            if not grpc_success:
+                # HTTP fallback
+                async with httpx.AsyncClient(timeout=3.0) as client:
+                    await client.post(
+                        f"{settings.PRODUCT_SERVICE_URL}/product/deduct-stock",
+                        json={"items": [{"product_id": item.product_id, "quantity": item.quantity}]},
+                    )
+        except Exception as e:
+            print(f"[Product Stock Deduction Warning for {item.product_id}]: {e}")
 
     # Release Redis stock hold
     for item in order.items:

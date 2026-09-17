@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package product;
+
+// ==========================================
+// Product gRPC Service Definition
+// ==========================================
+service ProductGrpcService {
+  rpc GetProducts (ProductListRequest) returns (ProductListResponse);
+  rpc GetProductById (ProductDetailRequest) returns (ProductDetailResponse);
+  rpc GetSellerProducts (SellerProductsRequest) returns (ProductListResponse);
+  rpc GetCategories (CategoriesRequest) returns (CategoriesResponse);
+  rpc GetFilterMeta (FilterMetaRequest) returns (FilterMetaResponse);
+  rpc CreateProduct (CreateProductGrpcRequest) returns (ProductDetailResponse);
+  rpc DeductStock (DeductStockGrpcRequest) returns (DeductStockGrpcResponse);
+}
+
+// ==========================================
+// Data Structures & Messages
+// ==========================================
+
+message ProductItem {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int32 stock = 5;
+  string category_id = 6;
+  string brand = 7;
+  string image_url = 8;
+  repeated string images = 9;
+  bool is_active = 10;
+  bool is_deal = 11;
+  double discount_percentage = 12;
+  double rating = 13;
+  int32 reviews_count = 14;
+  string seller_id = 15;
+  string shop_name = 16;
+  string created_at = 17;
+  string updated_at = 18;
+}
+
+message ProductListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string search = 3;
+  string category_id = 4;
+  string brand = 5;
+  bool has_is_deal = 6;
+  bool is_deal = 7;
+  bool has_min_price = 8;
+  double min_price = 9;
+  bool has_max_price = 10;
+  double max_price = 11;
+  bool has_min_rating = 12;
+  double min_rating = 13;
+  string seller_id = 14;
+  string sort_by = 15;
+}
+
+message ProductListResponse {
+  repeated ProductItem items = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  int32 total_pages = 5;
+}
+
+message ProductDetailRequest {
+  string id = 1;
+}
+
+message ProductDetailResponse {
+  ProductItem product = 1;
+  bool exists = 2;
+  string error_message = 3;
+}
+
+message SellerProductsRequest {
+  string seller_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message CategoryItem {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string icon = 4;
+  string image_url = 5;
+  bool is_active = 6;
+  int32 display_order = 7;
+}
+
+message CategoriesRequest {}
+
+message CategoriesResponse {
+  repeated CategoryItem categories = 1;
+}
+
+message FilterMetaRequest {}
+
+message PriceRange {
+  double min = 1;
+  double max = 2;
+}
+
+message FilterMetaResponse {
+  repeated string brands = 1;
+  repeated CategoryItem categories = 2;
+  PriceRange price_range = 3;
+}
+
+message CreateProductGrpcRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+  int32 stock = 4;
+  string category_id = 5;
+  string brand = 6;
+  string image_url = 7;
+  string seller_id = 8;
+  string shop_name = 9;
+  double discount_percentage = 10;
+}
+
+message DeductStockGrpcRequest {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+message DeductStockGrpcResponse {
+  bool success = 1;
+  int32 remaining_stock = 2;
+  string error_message = 3;
+}

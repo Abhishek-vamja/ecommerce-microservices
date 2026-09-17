@@ -10,3 +10,5 @@ pydantic-settings
 redis
 pyjwt
 python-multipart
+grpcio
+protobuf

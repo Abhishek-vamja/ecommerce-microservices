@@ -152,6 +152,8 @@ def seed_initial_catalog():
 
 from sqlalchemy import text
 
+from app.grpc_service.server import start_grpc_server, stop_grpc_server
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure tables exist
@@ -175,7 +177,14 @@ async def lifespan(app: FastAPI):
         except Exception:
             pass
     seed_initial_catalog()
+
+    # Start High-Speed Binary gRPC Server concurrently on Port 50051
+    await start_grpc_server(host="0.0.0.0", port=50051)
+    
     yield
+    
+    # Graceful gRPC Server Shutdown
+    await stop_grpc_server()
 
 
 app = FastAPI(

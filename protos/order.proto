@@ -1,0 +1,344 @@
+syntax = "proto3";
+
+package order;
+
+// ==========================================
+// Order gRPC Service Definition
+// ==========================================
+service OrderGrpcService {
+  // Cart RPCs
+  rpc GetCart (CartRequest) returns (CartResponse);
+  rpc AddToCart (AddToCartRequest) returns (CartActionResponse);
+  rpc UpdateCartItem (UpdateCartItemRequest) returns (CartActionResponse);
+  rpc DeleteCartItem (DeleteCartItemRequest) returns (CartActionResponse);
+  rpc ClearCart (CartRequest) returns (CartActionResponse);
+
+  // Wishlist RPCs
+  rpc GetWishlist (WishlistRequest) returns (WishlistResponse);
+  rpc ToggleWishlist (ToggleWishlistRequest) returns (ToggleWishlistResponse);
+  rpc MoveWishlistToCart (MoveWishlistRequest) returns (CartActionResponse);
+
+  // Checkout & Customer Orders
+  rpc CheckoutOrder (CheckoutGrpcRequest) returns (CheckoutGrpcResponse);
+  rpc GetMyOrders (MyOrdersRequest) returns (OrderListResponse);
+  rpc GetOrderById (OrderDetailRequest) returns (OrderDetailResponse);
+  rpc GetOrderTracking (OrderTrackingRequest) returns (OrderTrackingResponse);
+
+  // Internal Inter-service calls
+  rpc ConfirmOrderInternal (ConfirmOrderInternalRequest) returns (ConfirmOrderResponse);
+  rpc FailOrderInternal (FailOrderInternalRequest) returns (FailOrderResponse);
+
+  // Seller & Admin 5% Engine RPCs
+  rpc GetSellerAnalytics (SellerAnalyticsRequest) returns (SellerAnalyticsResponse);
+  rpc GetSellerOrders (SellerOrdersRequest) returns (SellerOrderListResponse);
+  rpc UpdateSellerOrderStatus (UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+  rpc GetAdminProfits (EmptyOrderRequest) returns (AdminProfitsResponse);
+  rpc GetAdminSellersSummary (EmptyOrderRequest) returns (AdminSellersSummaryResponse);
+}
+
+// ==========================================
+// Data Structures & Messages
+// ==========================================
+
+message EmptyOrderRequest {}
+
+message CartRequest {
+  string user_id = 1;
+}
+
+message CartItemMessage {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  double unit_price = 4;
+  string image_url = 5;
+  int32 quantity = 6;
+  double item_total = 7;
+  string seller_id = 8;
+  string shop_name = 9;
+}
+
+message CartResponse {
+  string id = 1;
+  string user_id = 2;
+  repeated CartItemMessage items = 3;
+  double subtotal = 4;
+  int32 item_count = 5;
+}
+
+message AddToCartRequest {
+  string user_id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  double unit_price = 4;
+  string image_url = 5;
+  int32 quantity = 6;
+  string seller_id = 7;
+  string shop_name = 8;
+}
+
+message UpdateCartItemRequest {
+  string user_id = 1;
+  string item_id = 2;
+  int32 quantity = 3;
+}
+
+message DeleteCartItemRequest {
+  string user_id = 1;
+  string item_id = 2;
+}
+
+message CartActionResponse {
+  bool success = 1;
+  string message = 2;
+  string cart_id = 3;
+}
+
+message WishlistRequest {
+  string user_id = 1;
+}
+
+message WishlistItemMessage {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  double unit_price = 4;
+  string image_url = 5;
+  string created_at = 6;
+}
+
+message WishlistResponse {
+  repeated WishlistItemMessage items = 1;
+}
+
+message ToggleWishlistRequest {
+  string user_id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  double unit_price = 4;
+  string image_url = 5;
+}
+
+message ToggleWishlistResponse {
+  bool success = 1;
+  string action = 2;
+  string product_id = 3;
+}
+
+message MoveWishlistRequest {
+  string user_id = 1;
+  string product_id = 2;
+}
+
+message CheckoutGrpcRequest {
+  string user_id = 1;
+  string shipping_address = 2;
+  string payment_method = 3;
+  string coupon_code = 4;
+}
+
+message CheckoutGrpcResponse {
+  bool success = 1;
+  string message = 2;
+  string order_id = 3;
+  string order_number = 4;
+  double total_amount = 5;
+  double discount_amount = 6;
+  double shipping_fee = 7;
+  double net_amount = 8;
+  string status = 9;
+  string payment_method = 10;
+  string error_message = 11;
+}
+
+message MyOrdersRequest {
+  string user_id = 1;
+}
+
+message OrderItemDetail {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  double unit_price = 4;
+  int32 quantity = 5;
+  double total_price = 6;
+  string image_url = 7;
+  double platform_fee = 8;
+  double seller_payout = 9;
+  string seller_id = 10;
+  string shop_name = 11;
+}
+
+message OrderTrackingEvent {
+  string status = 1;
+  string message = 2;
+  string timestamp = 3;
+}
+
+message OrderDetailItem {
+  string id = 1;
+  string order_number = 2;
+  string user_id = 3;
+  double total_amount = 4;
+  double discount_amount = 5;
+  double shipping_fee = 6;
+  double net_amount = 7;
+  string status = 8;
+  string payment_method = 9;
+  string payment_status = 10;
+  string shipping_address = 11;
+  string created_at = 12;
+  int32 item_count = 13;
+  repeated OrderItemDetail items = 14;
+  repeated OrderTrackingEvent tracking = 15;
+}
+
+message OrderListResponse {
+  repeated OrderDetailItem orders = 1;
+}
+
+message OrderDetailRequest {
+  string user_id = 1;
+  string order_id = 2;
+}
+
+message OrderDetailResponse {
+  bool exists = 1;
+  OrderDetailItem order = 2;
+  string error_message = 3;
+}
+
+message OrderTrackingRequest {
+  string order_id = 1;
+}
+
+message OrderTrackingResponse {
+  bool exists = 1;
+  string order_id = 2;
+  string order_number = 3;
+  string current_status = 4;
+  string created_at = 5;
+  repeated string stages = 6;
+  repeated OrderTrackingEvent history = 7;
+  string error_message = 8;
+}
+
+message ConfirmOrderInternalRequest {
+  string order_id = 1;
+  string razorpay_payment_id = 2;
+}
+
+message ConfirmOrderResponse {
+  bool success = 1;
+  string message = 2;
+  string order_id = 3;
+}
+
+message FailOrderInternalRequest {
+  string order_id = 1;
+  string reason = 2;
+}
+
+message FailOrderResponse {
+  bool success = 1;
+  string message = 2;
+  string order_id = 3;
+}
+
+message SellerAnalyticsRequest {
+  string seller_id = 1;
+}
+
+message SellerAnalyticsResponse {
+  string seller_id = 1;
+  double gross_sales = 2;
+  double platform_fees_deducted = 3;
+  double net_earnings = 4;
+  int32 total_orders = 5;
+  int32 units_sold = 6;
+  double commission_rate_percent = 7;
+  repeated OrderDetailItem recent_orders = 8;
+}
+
+message SellerOrdersRequest {
+  string seller_id = 1;
+}
+
+message SellerOrderItemData {
+  string id = 1;
+  string order_number = 2;
+  string user_id = 3;
+  string status = 4;
+  string payment_status = 5;
+  string payment_method = 6;
+  string shipping_address = 7;
+  string created_at = 8;
+  double seller_gross_total = 9;
+  double platform_fee_5pct = 10;
+  double seller_net_payout = 11;
+  repeated OrderItemDetail items = 12;
+}
+
+message SellerOrderListResponse {
+  repeated SellerOrderItemData orders = 1;
+}
+
+message UpdateOrderStatusRequest {
+  string order_id = 1;
+  string status = 2;
+  string message = 3;
+}
+
+message UpdateOrderStatusResponse {
+  bool success = 1;
+  string message = 2;
+  string order_id = 3;
+  string status = 4;
+}
+
+message ProfitSummary {
+  double total_gmv = 1;
+  double total_platform_profit_5pct = 2;
+  double total_seller_payouts_95pct = 3;
+  int32 total_orders = 4;
+  int32 total_items_sold = 5;
+  int32 total_active_sellers = 6;
+  string platform_commission_rate = 7;
+}
+
+message SaleBreakdownItem {
+  string item_id = 1;
+  string order_id = 2;
+  string order_number = 3;
+  string customer_user_id = 4;
+  string item_name = 5;
+  string seller_id = 6;
+  string shop_name = 7;
+  int32 quantity = 8;
+  double unit_price = 9;
+  double gross_sale_amount = 10;
+  double platform_profit_5pct = 11;
+  double seller_payout_95pct = 12;
+  string order_status = 13;
+  string payment_status = 14;
+  string created_at = 15;
+}
+
+message AdminProfitsResponse {
+  ProfitSummary summary = 1;
+  repeated SaleBreakdownItem sales_breakdown = 2;
+}
+
+message AdminSellerSummaryItem {
+  string seller_id = 1;
+  string shop_name = 2;
+  double gross_sales = 3;
+  double platform_profit_5pct = 4;
+  double seller_payout_95pct = 5;
+  int32 units_sold = 6;
+  int32 total_orders = 7;
+}
+
+message AdminSellersSummaryResponse {
+  repeated AdminSellerSummaryItem sellers = 1;
+}

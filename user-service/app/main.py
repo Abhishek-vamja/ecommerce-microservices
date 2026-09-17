@@ -1,13 +1,12 @@
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from sqlalchemy import text
 
 from app.database import engine, Base
 from app.model.user import User, Address
 from app.router import user_router
+from app.grpc_service.server import start_grpc_server, stop_grpc_server
 
-
-from sqlalchemy import text
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +23,14 @@ async def lifespan(app: FastAPI):
                 conn.commit()
         except Exception:
             pass
+
+    # Start High-Speed Binary gRPC Server on Port 50052
+    await start_grpc_server(host="0.0.0.0", port=50052)
+
     yield
+
+    # Graceful gRPC Server Shutdown
+    await stop_grpc_server()
 
 
 app = FastAPI(
@@ -50,5 +56,3 @@ async def health_check():
     }
 
 app.include_router(user_router.router)
-
-

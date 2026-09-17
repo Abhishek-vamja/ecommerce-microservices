@@ -1,0 +1,253 @@
+syntax = "proto3";
+
+package user;
+
+// ==========================================
+// User gRPC Service Definition
+// ==========================================
+service UserGrpcService {
+  rpc RegisterOrLogin (RegisterRequest) returns (RegisterResponse);
+  rpc VerifyOTP (VerifyOTPRequest) returns (VerifyOTPResponse);
+  rpc GetUserProfile (UserProfileRequest) returns (UserProfileResponse);
+  rpc UpdateUserProfile (UserUpdateRequest) returns (UserUpdateResponse);
+  rpc GetAddresses (AddressListRequest) returns (AddressListResponse);
+  rpc AddAddress (AddAddressRequest) returns (AddressItemResponse);
+  rpc DeleteAddress (DeleteAddressRequest) returns (DeleteAddressResponse);
+  
+  // Seller & Admin RPCs
+  rpc RegisterSeller (SellerRegisterRequest) returns (SellerAuthResponse);
+  rpc SellerAuthOTP (SellerAuthOTPRequest) returns (SellerAuthOTPResponse);
+  rpc SellerVerifyOTP (VerifyOTPRequest) returns (SellerAuthResponse);
+  rpc AdminAuthOTP (AdminAuthOTPRequest) returns (AdminAuthOTPResponse);
+  rpc AdminVerifyOTP (VerifyOTPRequest) returns (AdminVerifyResponse);
+  rpc GetSellerProfile (SellerProfileRequest) returns (SellerProfileResponse);
+  rpc GetAllSellersForAdmin (EmptyUserRequest) returns (SellerListResponse);
+  rpc ToggleSellerStatus (ToggleSellerRequest) returns (ToggleSellerResponse);
+}
+
+// ==========================================
+// Messages & Data Structures
+// ==========================================
+
+message EmptyUserRequest {}
+
+message RegisterRequest {
+  string email = 1;
+  string role = 2;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  string user_unique_id = 3;
+  string email = 4;
+}
+
+message VerifyOTPRequest {
+  string user_id = 1;
+  int32 otp = 2;
+}
+
+message UserItem {
+  string unique_id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+}
+
+message VerifyOTPResponse {
+  bool success = 1;
+  string message = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  UserItem user = 5;
+}
+
+message UserProfileRequest {
+  string user_id = 1;
+}
+
+message AddressItem {
+  string id = 1;
+  string recipient_name = 2;
+  string phone = 3;
+  string address_line1 = 4;
+  string address_line2 = 5;
+  string city = 6;
+  string state = 7;
+  string pincode = 8;
+  bool is_default = 9;
+}
+
+message UserProfileResponse {
+  bool exists = 1;
+  string unique_id = 2;
+  string name = 3;
+  string email = 4;
+  string phone = 5;
+  string role = 6;
+  string avatar_url = 7;
+  string default_pincode = 8;
+  repeated AddressItem addresses = 9;
+  string error_message = 10;
+}
+
+message UserUpdateRequest {
+  string user_id = 1;
+  string name = 2;
+  string phone = 3;
+  string avatar_url = 4;
+}
+
+message UserUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message AddressListRequest {
+  string user_id = 1;
+}
+
+message AddressListResponse {
+  repeated AddressItem addresses = 1;
+}
+
+message AddAddressRequest {
+  string user_id = 1;
+  string recipient_name = 2;
+  string phone = 3;
+  string address_line1 = 4;
+  string address_line2 = 5;
+  string city = 6;
+  string state = 7;
+  string pincode = 8;
+  bool is_default = 9;
+}
+
+message AddressItemResponse {
+  bool success = 1;
+  string message = 2;
+  AddressItem address = 3;
+}
+
+message DeleteAddressRequest {
+  string user_id = 1;
+  string address_id = 2;
+}
+
+message DeleteAddressResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SellerRegisterRequest {
+  string owner_name = 1;
+  string email = 2;
+  string phone = 3;
+  string shop_name = 4;
+  string category = 5;
+  string description = 6;
+  string logo_url = 7;
+  string address = 8;
+  string city = 9;
+  string state = 10;
+  string pincode = 11;
+  string gstin = 12;
+  string pan = 13;
+  string bank_account_number = 14;
+  string ifsc_code = 15;
+}
+
+message SellerItem {
+  string id = 1;
+  string user_id = 2;
+  string shop_name = 3;
+  string shop_slug = 4;
+  string owner_name = 5;
+  string email = 6;
+  string phone = 7;
+  string category = 8;
+  string description = 9;
+  string logo_url = 10;
+  string banner_url = 11;
+  string address_line = 12;
+  string city = 13;
+  string state = 14;
+  string pincode = 15;
+  string gst_number = 16;
+  string pan_number = 17;
+  string bank_account_number = 18;
+  string ifsc_code = 19;
+  string commission_percentage = 20;
+  bool is_verified = 21;
+  bool is_active = 22;
+  string created_at = 23;
+}
+
+message SellerAuthResponse {
+  bool success = 1;
+  string message = 2;
+  string token = 3;
+  SellerItem seller = 4;
+}
+
+message SellerAuthOTPRequest {
+  string email = 1;
+}
+
+message SellerAuthOTPResponse {
+  bool success = 1;
+  string message = 2;
+  string user_id = 3;
+  string email = 4;
+  string shop_name = 5;
+}
+
+message AdminAuthOTPRequest {
+  string email = 1;
+}
+
+message AdminAuthOTPResponse {
+  bool success = 1;
+  string message = 2;
+  string user_id = 3;
+  string email = 4;
+  string role = 5;
+}
+
+message AdminInfo {
+  string role = 1;
+  string email = 2;
+  repeated string permissions = 3;
+}
+
+message AdminVerifyResponse {
+  bool success = 1;
+  string message = 2;
+  string token = 3;
+  AdminInfo admin = 4;
+}
+
+message SellerProfileRequest {
+  string user_id = 1;
+}
+
+message SellerProfileResponse {
+  bool exists = 1;
+  SellerItem seller = 2;
+  string error_message = 3;
+}
+
+message SellerListResponse {
+  repeated SellerItem sellers = 1;
+}
+
+message ToggleSellerRequest {
+  string seller_id = 1;
+}
+
+message ToggleSellerResponse {
+  bool success = 1;
+  string message = 2;
+  bool is_active = 3;
+}

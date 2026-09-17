@@ -22,13 +22,20 @@ from app.config import settings
 import httpx
 
 
+from app.grpc_client import close_grpc_channel, close_user_grpc_channel, close_order_grpc_channel, close_payment_grpc_channel
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize shared persistent HTTP connection pool (HTTP keep-alive)
     await init_http_client()
     yield
-    # Gracefully close connection pool
+    # Gracefully close connection pool and all gRPC channels
     await close_http_client()
+    await close_grpc_channel()
+    await close_user_grpc_channel()
+    await close_order_grpc_channel()
+    await close_payment_grpc_channel()
 
 
 app = FastAPI(

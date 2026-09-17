@@ -3,12 +3,20 @@ from fastapi import FastAPI
 from app.database import engine, Base
 from app.models.payment import PaymentTransaction
 from app.router import payment_router
+from app.grpc_service.server import start_grpc_server, stop_grpc_server
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+
+    # Start High-Speed Binary gRPC Server on Port 50054
+    await start_grpc_server(host="0.0.0.0", port=50054)
+
     yield
+
+    # Graceful gRPC Server Shutdown
+    await stop_grpc_server()
 
 
 app = FastAPI(
@@ -30,4 +38,3 @@ async def health():
 app.include_router(payment_router.router, prefix=APP_V1)
 app.include_router(payment_router.router, prefix="/api")
 app.include_router(payment_router.router)
-
