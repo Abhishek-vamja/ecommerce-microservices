@@ -77,51 +77,30 @@ redis-server
 
 ### Step 2: Environment Variables Setup
 
-Create a `.env` file in each microservice directory with your database credentials:
+Each service and frontend contains a pre-configured `.env.example` template. Copy the template to `.env` in each directory and update your local PostgreSQL password if needed:
 
-#### `user-service/.env`
-```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/user_service_db
-SECRET_KEY=econ-super-secret-jwt-key-2026-change-in-production
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
-REDIS_HOST=localhost
-REDIS_PORT=6379
-SMTP_USER=
-SMTP_PASSWORD=
+#### Linux / macOS:
+```bash
+cp api-gateway/.env.example api-gateway/.env
+cp user-service/.env.example user-service/.env
+cp product-service/.env.example product-service/.env
+cp order-service/.env.example order-service/.env
+cp payment-service/.env.example payment-service/.env
+cp frontend/.env.example frontend/.env
+cp portal-frontend/.env.example portal-frontend/.env
 ```
 
-#### `product-service/.env`
-```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/product_service_db
-SECRET_KEY=econ-super-secret-jwt-key-2026-change-in-production
-JWT_ALGORITHM=HS256
-REDIS_HOST=localhost
-REDIS_PORT=6379
+#### Windows PowerShell:
+```powershell
+copy api-gateway\\.env.example api-gateway\\.env
+copy user-service\\.env.example user-service\\.env
+copy product-service\\.env.example product-service\\.env
+copy order-service\\.env.example order-service\\.env
+copy payment-service\\.env.example payment-service\\.env
+copy frontend\\.env.example frontend\\.env
+copy portal-frontend\\.env.example portal-frontend\\.env
 ```
 
-#### `order-service/.env`
-```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/order_service_db
-SECRET_KEY=econ-super-secret-jwt-key-2026-change-in-production
-JWT_ALGORITHM=HS256
-PRODUCT_SERVICE_URL=http://localhost:8002
-PAYMENT_SERVICE_URL=http://localhost:8004
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-
-#### `payment-service/.env`
-```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/payment_service_db
-SECRET_KEY=econ-super-secret-jwt-key-2026-change-in-production
-JWT_ALGORITHM=HS256
-ORDER_SERVICE_URL=http://localhost:8003
-RAZORPAY_KEY_ID=rzp_test_shopmate_mock
-RAZORPAY_KEY_SECRET=shopmate_mock_secret
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
 
 ---
 
