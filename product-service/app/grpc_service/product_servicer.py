@@ -3,10 +3,10 @@ import math
 import logging
 from uuid import uuid4
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
+from app.database import SessionLocal
 from app.models.product import Product, Category
 from app.grpc_gen import product_pb2, product_pb2_grpc
 
@@ -57,7 +57,7 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
             page_size = min(100, max(1, request.page_size or 12))
             offset = (page - 1) * page_size
 
-            query = select(Product).filter(Product.is_active == True)
+            query = db.query(Product).filter(Product.is_active == True)
 
             if request.seller_id:
                 query = query.filter(Product.seller_id == request.seller_id)
@@ -97,6 +97,8 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
             if request.has_min_rating:
                 query = query.filter(Product.rating >= request.min_rating)
 
+            total = query.count()
+
             # Sorting
             sort_by = request.sort_by or "newest"
             if sort_by == "price_asc":
@@ -108,10 +110,7 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
             else:
                 query = query.order_by(Product.created_at.desc())
 
-            count_query = select(func.count()).select_from(query.subquery())
-            total = db.scalar(count_query) or 0
-
-            products = db.scalars(query.offset(offset).limit(page_size)).all()
+            products = query.offset(offset).limit(page_size).all()
             total_pages = math.ceil(total / page_size) if total > 0 else 1
 
             proto_items = [_model_to_proto(p) for p in products]
@@ -143,24 +142,29 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
             if not product:
                 # Try UUID query if format matches
                 try:
-                    product = db.query(Product).filter(Product.id == prod_id).first()
+                    import uuid
+                    u = uuid.UUID(prod_id)
+                    product = db.query(Product).filter(Product.id == u).first()
                 except Exception:
                     pass
 
             if not product:
                 return product_pb2.ProductDetailResponse(
                     exists=False,
-                    error_message=f"Product with id '{prod_id}' not found."
+                    error_message=f"Product with ID '{prod_id}' not found."
                 )
 
             return product_pb2.ProductDetailResponse(
                 product=_model_to_proto(product),
                 exists=True,
-                error_message=""
+                error_message="",
             )
         except Exception as e:
             logger.error(f"[gRPC GetProductById] Error: {e}", exc_info=True)
-            return product_pb2.ProductDetailResponse(exists=False, error_message=str(e))
+            return product_pb2.ProductDetailResponse(
+                exists=False,
+                error_message=str(e),
+            )
         finally:
             db.close()
 
@@ -171,11 +175,13 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
             page_size = min(100, max(1, request.page_size or 50))
             offset = (page - 1) * page_size
 
-            query = select(Product).filter(Product.seller_id == request.seller_id)
-            count_query = select(func.count()).select_from(query.subquery())
-            total = db.scalar(count_query) or 0
+            query = db.query(Product).filter(
+                Product.seller_id == request.seller_id,
+                Product.is_active == True
+            )
 
-            products = db.scalars(query.order_by(Product.created_at.desc()).offset(offset).limit(page_size)).all()
+            total = query.count()
+            products = query.order_by(Product.created_at.desc()).offset(offset).limit(page_size).all()
             total_pages = math.ceil(total / page_size) if total > 0 else 1
 
             return product_pb2.ProductListResponse(
@@ -194,7 +200,7 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
     async def GetCategories(self, request, context):
         db: Session = SessionLocal()
         try:
-            cats = db.query(Category).order_by(Category.display_order.asc(), Category.name.asc()).all()
+            cats = db.query(Category).order_by(Category.display_order.asc()).all()
             return product_pb2.CategoriesResponse(
                 categories=[_category_to_proto(c) for c in cats]
             )
@@ -207,67 +213,66 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
     async def GetFilterMeta(self, request, context):
         db: Session = SessionLocal()
         try:
-            brands_res = db.query(Product.brand).filter(
-                Product.is_active == True,
-                Product.brand.isnot(None)
-            ).distinct().all()
-            brands = [b[0] for b in brands_res if b[0]]
-
             cats = db.query(Category).order_by(Category.display_order.asc()).all()
+            brands_rows = db.query(Product.brand).filter(Product.is_active == True, Product.brand != None).distinct().all()
+            brands = sorted([b[0] for b in brands_rows if b[0]])
 
-            price_min, price_max = db.query(
-                func.min(Product.price),
-                func.max(Product.price)
-            ).filter(Product.is_active == True).first()
+            price_min_row = db.query(Product.price).filter(Product.is_active == True).order_by(Product.price.asc()).first()
+            price_max_row = db.query(Product.price).filter(Product.is_active == True).order_by(Product.price.desc()).first()
+
+            min_val = float(price_min_row[0]) if price_min_row else 0.0
+            max_val = float(price_max_row[0]) if price_max_row else 100000.0
 
             return product_pb2.FilterMetaResponse(
                 brands=brands,
                 categories=[_category_to_proto(c) for c in cats],
-                price_range=product_pb2.PriceRange(
-                    min=float(price_min or 0.0),
-                    max=float(price_max or 100000.0),
-                )
+                price_range=product_pb2.PriceRange(min=min_val, max=max_val),
             )
         except Exception as e:
             logger.error(f"[gRPC GetFilterMeta] Error: {e}", exc_info=True)
-            return product_pb2.FilterMetaResponse(
-                brands=[],
-                categories=[],
-                price_range=product_pb2.PriceRange(min=0.0, max=100000.0)
-            )
+            return product_pb2.FilterMetaResponse(brands=[], categories=[])
         finally:
             db.close()
 
     async def CreateProduct(self, request, context):
         db: Session = SessionLocal()
         try:
-            new_prod = Product(
-                unique_id=f"prod_{uuid4().hex[:10]}",
-                name=request.name.strip(),
-                description=request.description.strip(),
+            import uuid
+            new_id = uuid.uuid4()
+            unique_id = f"prod_{uuid.uuid4().hex[:12]}"
+
+            product = Product(
+                id=new_id,
+                unique_id=unique_id,
+                name=request.name,
+                description=request.description,
                 price=request.price,
                 stock=request.stock,
-                category_id=request.category_id or "cat_electronics",
-                brand=request.brand or "Generic",
-                image_url=request.image_url or "",
-                seller_id=request.seller_id or "",
-                shop_name=request.shop_name or "Official Store",
-                discount_percentage=int(request.discount_percentage or 0),
+                category_id=request.category_id,
+                brand=request.brand,
+                image_url=request.image_url,
+                seller_id=request.seller_id,
+                shop_name=request.shop_name,
+                discount_percentage=int(request.discount_percentage),
+                created_by=request.seller_id or "seller",
                 is_active=True,
-                created_by=request.seller_id or "system",
             )
-            db.add(new_prod)
+            db.add(product)
             db.commit()
-            db.refresh(new_prod)
+            db.refresh(product)
+
             return product_pb2.ProductDetailResponse(
-                product=_model_to_proto(new_prod),
+                product=_model_to_proto(product),
                 exists=True,
-                error_message=""
+                error_message="",
             )
         except Exception as e:
             db.rollback()
             logger.error(f"[gRPC CreateProduct] Error: {e}", exc_info=True)
-            return product_pb2.ProductDetailResponse(exists=False, error_message=str(e))
+            return product_pb2.ProductDetailResponse(
+                exists=False,
+                error_message=str(e),
+            )
         finally:
             db.close()
 
@@ -275,35 +280,51 @@ class ProductGrpcService(product_pb2_grpc.ProductGrpcServiceServicer):
         db: Session = SessionLocal()
         try:
             prod_id = request.product_id.strip()
-            prod = db.query(Product).filter(
-                or_(Product.unique_id == prod_id, Product.name == prod_id)
+            product = db.query(Product).filter(
+                or_(
+                    Product.unique_id == prod_id,
+                    Product.name == prod_id
+                )
             ).first()
 
-            if not prod:
+            if not product:
+                try:
+                    import uuid
+                    u = uuid.UUID(prod_id)
+                    product = db.query(Product).filter(Product.id == u).first()
+                except Exception:
+                    pass
+
+            if not product:
                 return product_pb2.DeductStockGrpcResponse(
                     success=False,
                     remaining_stock=0,
-                    error_message=f"Product '{prod_id}' not found."
+                    error_message=f"Product '{prod_id}' not found",
                 )
 
-            if prod.stock < request.quantity:
+            if product.stock < request.quantity:
                 return product_pb2.DeductStockGrpcResponse(
                     success=False,
-                    remaining_stock=prod.stock,
-                    error_message=f"Insufficient stock for '{prod.name}'. Requested: {request.quantity}, Available: {prod.stock}"
+                    remaining_stock=product.stock,
+                    error_message=f"Insufficient stock for {product.name}. Available: {product.stock}, Requested: {request.quantity}",
                 )
 
-            prod.stock -= request.quantity
+            product.stock = product.stock - request.quantity
             db.commit()
-            db.refresh(prod)
+            db.refresh(product)
+
             return product_pb2.DeductStockGrpcResponse(
                 success=True,
-                remaining_stock=prod.stock,
-                error_message=""
+                remaining_stock=product.stock,
+                error_message="",
             )
         except Exception as e:
             db.rollback()
             logger.error(f"[gRPC DeductStock] Error: {e}", exc_info=True)
-            return product_pb2.DeductStockGrpcResponse(success=False, remaining_stock=0, error_message=str(e))
+            return product_pb2.DeductStockGrpcResponse(
+                success=False,
+                remaining_stock=0,
+                error_message=str(e),
+            )
         finally:
             db.close()

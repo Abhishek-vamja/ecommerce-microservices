@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Filter, SlidersHorizontal, ChevronRight, X, Search, Zap, Star, Sparkles } from 'lucide-react';
+import { Filter, SlidersHorizontal, ChevronRight, ChevronLeft, X, Search, Zap, Star, Sparkles } from 'lucide-react';
 import { api } from '../api/client';
 import ProductCard from '../components/ProductCard';
 
@@ -20,12 +20,15 @@ export default function ProductListPage({
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
+  const PAGE_SIZE = 24;
+
   const getProductCartQty = (pid) => {
     const item = cart?.items?.find(i => i.product_id === pid);
     return item ? item.quantity : 0;
   };
 
-  // Filters read from URL params
+  // Filters & Pagination read from URL params
+  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const categoryParam = searchParams.get('category') || '';
   const brandParam = searchParams.get('brand') || '';
   const minPriceParam = searchParams.get('min_price') || '';
@@ -46,7 +49,7 @@ export default function ProductListPage({
     setLocalMaxPrice(maxPriceParam);
   }, [minPriceParam, maxPriceParam]);
 
-  // Fetch Products based on URL filters
+  // Fetch Products based on URL filters & pagination
   useEffect(() => {
     const fetchFilteredProducts = async () => {
       setLoading(true);
@@ -58,7 +61,8 @@ export default function ProductListPage({
         else if (sortParam === 'rating_desc' || sortParam === 'popularity') sortBy = 'rating';
 
         const params = {
-          page_size: 24,
+          page: pageParam,
+          page_size: PAGE_SIZE,
           sort_by: sortBy,
         };
         if (categoryParam) params.category_id = categoryParam;
@@ -82,7 +86,7 @@ export default function ProductListPage({
     };
 
     fetchFilteredProducts();
-  }, [categoryParam, brandParam, minPriceParam, maxPriceParam, minRatingParam, dealParam, sortParam, queryParam]);
+  }, [pageParam, categoryParam, brandParam, minPriceParam, maxPriceParam, minRatingParam, dealParam, sortParam, queryParam]);
 
   const updateParam = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
@@ -91,7 +95,22 @@ export default function ProductListPage({
     } else {
       newParams.set(key, value);
     }
+    // Reset to page 1 whenever any filter/sort is modified (except when navigating pages)
+    if (key !== 'page') {
+      newParams.delete('page');
+    }
     setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newPage <= 1) {
+      newParams.delete('page');
+    } else {
+      newParams.set('page', newPage.toString());
+    }
+    setSearchParams(newParams);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearAllFilters = () => {
@@ -99,6 +118,24 @@ export default function ProductListPage({
   };
 
   const hasActiveFilters = categoryParam || brandParam || minPriceParam || maxPriceParam || minRatingParam || dealParam || queryParam;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // Generate pagination items
+  const getPaginationWindow = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (pageParam <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (pageParam >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', pageParam - 1, pageParam, pageParam + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const renderFilterContent = () => (
     <>
@@ -288,7 +325,7 @@ export default function ProductListPage({
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             <span>{categoryParam ? categories.find(c => c.slug === categoryParam || c.id === categoryParam)?.name || categoryParam : 'All Products'}</span>
-            <span className="text-xs font-bold text-gray-400">({totalCount} items)</span>
+            <span className="text-xs font-bold text-gray-400">({totalCount.toLocaleString()} items)</span>
           </h1>
         </div>
 
@@ -393,23 +430,23 @@ export default function ProductListPage({
               <div className="pt-3 border-t border-gray-100 flex items-center gap-3">
                 <button
                   onClick={() => { clearAllFilters(); setIsMobileFilterOpen(false); }}
-                  className="flex-1 py-3 text-xs font-bold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200"
+                  className="flex-1 py-3 text-xs font-bold text-gray-600 bg-gray-100 rounded-2xl hover:bg-gray-200 cursor-pointer"
                 >
                   Reset
                 </button>
                 <button
                   onClick={() => setIsMobileFilterOpen(false)}
-                  className="flex-2 py-3 text-xs font-black text-white bg-orange-600 rounded-2xl shadow-md hover:bg-orange-700"
+                  className="flex-2 py-3 text-xs font-black text-white bg-orange-600 rounded-2xl shadow-md hover:bg-orange-700 cursor-pointer"
                 >
-                  Show {totalCount} Results
+                  Show {totalCount.toLocaleString()} Results
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* PRODUCTS CATALOG GRID (2 columns on mobile, 3 on tablet/desktop) */}
-        <div className="lg:col-span-3">
+        {/* PRODUCTS CATALOG GRID + PAGINATION */}
+        <div className="lg:col-span-3 space-y-8">
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
               {[1, 2, 3, 4, 5, 6].map(n => (
@@ -433,24 +470,97 @@ export default function ProductListPage({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
-              {products.map(product => {
-                const pid = product.unique_id || product.id;
-                return (
-                  <ProductCard
-                    key={pid}
-                    product={product}
-                    cartQty={getProductCartQty(pid)}
-                    onAddToCart={onAddToCart}
-                    onUpdateCartQty={onUpdateCartQty}
-                    onToggleWishlist={onToggleWishlist}
-                    addingToCartId={addingToCartId}
-                    togglingWishlistId={togglingWishlistId}
-                    isWishlisted={wishlist.some(w => (w.product_id || w.id) === pid)}
-                  />
-                );
-              })}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-6">
+                {products.map(product => {
+                  const pid = product.unique_id || product.id;
+                  return (
+                    <ProductCard
+                      key={pid}
+                      product={product}
+                      cartQty={getProductCartQty(pid)}
+                      onAddToCart={onAddToCart}
+                      onUpdateCartQty={onUpdateCartQty}
+                      onToggleWishlist={onToggleWishlist}
+                      addingToCartId={addingToCartId}
+                      togglingWishlistId={togglingWishlistId}
+                      isWishlisted={wishlist.some(w => (w.product_id || w.id) === pid)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* PAGINATION BAR */}
+              {totalPages > 1 && (
+                <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                  
+                  {/* Results Count Summary */}
+                  <div className="text-xs font-bold text-gray-500 text-center sm:text-left">
+                    Showing <span className="text-gray-900 font-extrabold">{((pageParam - 1) * PAGE_SIZE) + 1}</span> –{' '}
+                    <span className="text-gray-900 font-extrabold">{Math.min(pageParam * PAGE_SIZE, totalCount).toLocaleString()}</span> of{' '}
+                    <span className="text-orange-600 font-extrabold">{totalCount.toLocaleString()}</span> products
+                    <span className="text-gray-400 font-normal ml-1.5">(Page {pageParam} of {totalPages.toLocaleString()})</span>
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    
+                    {/* Previous Button */}
+                    <button
+                      disabled={pageParam <= 1}
+                      onClick={() => handlePageChange(pageParam - 1)}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        pageParam <= 1
+                          ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                          : 'bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-200'
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Prev</span>
+                    </button>
+
+                    {/* Page Numbers */}
+                    {getPaginationWindow().map((p, idx) => {
+                      if (p === '...') {
+                        return (
+                          <span key={`dots-${idx}`} className="px-2 py-1 text-xs font-bold text-gray-400">
+                            •••
+                          </span>
+                        );
+                      }
+                      const isActive = p === pageParam;
+                      return (
+                        <button
+                          key={`page-${p}`}
+                          onClick={() => handlePageChange(p)}
+                          className={`min-w-[36px] h-9 px-2 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center ${
+                            isActive
+                              ? 'bg-orange-600 text-white shadow-xs scale-105'
+                              : 'bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-200'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+
+                    {/* Next Button */}
+                    <button
+                      disabled={pageParam >= totalPages}
+                      onClick={() => handlePageChange(pageParam + 1)}
+                      className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        pageParam >= totalPages
+                          ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                          : 'bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-600 border border-gray-200'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
