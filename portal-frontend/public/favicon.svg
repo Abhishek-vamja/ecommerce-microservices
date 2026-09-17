@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="portal-indigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#3730A3" />
+    </linearGradient>
+    <filter id="portal-shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25" flood-color="#1E1B4B" />
+    </filter>
+  </defs>
+  
+  <rect width="64" height="64" rx="18" fill="url(#portal-indigo)" />
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="17.25" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+  
+  <g filter="url(#portal-shadow)" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Store Awning -->
+    <path d="M14 26L18 14H46L50 26" fill="rgba(255, 255, 255, 0.15)" />
+    <!-- Awning Scallops -->
+    <path d="M14 26C14 28.5 16.2 30 18.5 30C20.8 30 22.8 28.5 23 26C23.2 28.5 25.2 30 27.5 30C29.8 30 31.8 28.5 32 26C32.2 28.5 34.2 30 36.5 30C38.8 30 40.8 28.5 41 26C41.2 28.5 43.2 30 45.5 30C47.8 30 50 28.5 50 26" />
+    
+    <!-- Store Pillars & Foundation -->
+    <path d="M18 30V48C18 49.5 19 50.5 20.5 50.5H43.5C45 50.5 46 49.5 46 48V30" />
+    
+    <!-- Central Star / Partner Shield Emblem -->
+    <path d="M32 37V45M28 41H36" stroke="#FDE047" stroke-width="3" />
+  </g>
+</svg>

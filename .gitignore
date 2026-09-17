@@ -1,0 +1,47 @@
+# Python Virtual Environments & Bytecode
+venv/
+.venv/
+*/venv/
+*/.venv/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Node.js & Frontend dependencies
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+.vite/
+*/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Secrets (Keep your passwords/API keys private)
+.env
+*/.env
+*.env.local
+*.env.*.local
+
+# Database files
+*.db
+*.sqlite3
+nexora.db
+*.sqlite
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# OS Temporary Files
+*.log
+logs/
+*/logs/

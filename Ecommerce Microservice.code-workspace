@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "user-service"
+		},
+		{
+			"path": "api-gateway"
+		},
+		{
+			"path": "product-service"
+		},
+		{
+			"path": "payment-service"
+		},
+		{
+			"path": "frontend"
+		},
+		{
+			"path": "order-service"
+		},
+		{
+			"path": "portal-frontend"
+		}
+	],
+	"settings": {}
+}

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="shopmate-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C" />
+      <stop offset="50%" stop-color="#EA580C" />
+      <stop offset="100%" stop-color="#C2410C" />
+    </linearGradient>
+    <filter id="drop-shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.2" flood-color="#7C2D12" />
+    </filter>
+  </defs>
+  
+  <rect width="64" height="64" rx="18" fill="url(#shopmate-orange)" />
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="17.25" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />
+  
+  <g filter="url(#drop-shadow)" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17 21L14.5 48C14.5 50.2 16.3 52 18.5 52H45.5C47.7 52 49.5 50.2 49.5 48L47 21H17Z" fill="rgba(255, 255, 255, 0.12)" />
+    <path d="M24 21V16C24 11.58 27.58 8 32 8C36.42 8 40 11.58 40 16V21" stroke-width="3.5" />
+    <path d="M26 27C26 30.31 28.69 33 32 33C35.31 33 38 30.31 38 27" stroke-width="3" />
+  </g>
+</svg>
