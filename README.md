@@ -4,6 +4,20 @@ A modern, scalable multi-vendor E-Commerce microservices ecosystem built with **
 
 ---
 
+<div align="center">
+
+[![Features](https://img.shields.io/badge/✨_Explore-All_Features_(FEATURES.md)-orange?style=for-the-badge)](FEATURES.md)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react)](https://react.dev)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io)
+
+**[📖 Complete Feature Specification (FEATURES.md)](FEATURES.md)** • **[🏛️ Architecture](#️-system-architecture--services)** • **[⚙️ Quick Start](#️-quick-start-guide)** • **[🔑 Seed Logins](#-default-roles--access)**
+
+</div>
+
+---
+
 ## 🏛️ System Architecture & Services
 
 ```text
